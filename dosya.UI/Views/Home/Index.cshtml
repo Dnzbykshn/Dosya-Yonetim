@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="row">
+    <div class="col-md-4">
+
+    </div>
+    <div class="col-md-4">
+        <h1>Dosyalarım</h1>
+    </div>
+
+</div>
+<div id="divResult" class="alert"></div>
+
+<div id="foldersList" class="row">
+    <!-- Kartlar buraya eklenecek -->
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        listele();
+
+    });
+    var baseurl = "https://localhost:7014/";
+    var gettoken = localStorage.getItem("token");
+    function listele() {
+        $.ajax({
+            type: "GET",
+            url: baseurl + "api/Folders",
+            contentType: "application/json",
+            headers: {
+                "Authorization": "Bearer " + gettoken
+            },
+            success: function (response) {
+                console.log(response);
+                var html = "";
+                $.each(response, function (index, item) {
+                    html += "<div class='card' style='width: 18rem; margin-left:1%;'>";
+                    html += "<img src='/img/img.jpg' class='card-img-top' alt='Card image cap'>";
+                    html += "<div class='card-body'>";
+                    html += "<h5 class='card-title'>" + item.dosyaAdı + "</h5>";
+                    html += "<p class='card-text'>Folder ID: " + item.id + "</p>";
+                    html += "<p hidden class='card-text'>File Name: " + item.folderName + "</p>";
+                    html += "<p class='card-text'>File Name: " + item.fileSize + " kb</p>";
+                    html += "<p class='card-text'>Dosya Türü: " + item.contentType + "</p>";
+                    html += "<p class='card-text'>Yüklenme Tarihi: " + new Date(item.created).toLocaleString() + "</p>";
+                    html += "<a href='" + baseurl + "api/Folders/api/DownloadFile/" + item.folderName + "' class='btn btn-success' download>Download</a>";
+                    html += "</div>"; // .card-body
+                    html += "</div>"; // .card
+                });
+                $("#foldersList").html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error: " + status + " " + error);
+            }
+        });
+    }
+
+    function indir(id, folderName) {
+
+        $.ajax({
+            type: "GET",
+            url: baseurl + "api/Folders/api/DownloadFile/" + folderName,
+            success: function (data) {
+                // Dosya başarıyla indirildiğinde yapılacak işlemler
+                console.log("File downloaded: " + folderName);
+                console.log("https://localhost:7014/upload/" + folderName);
+                $("#divResult")
+                    .show()
+                    .removeClass()
+                    .addClass("alert alert-success")
+                    .html("İndirme İşleml Başladı")
+                    .fadeOut(5000);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error downloading file: " + folderName + ", Status: " + status + ", Error: " + error);
+            }
+        });
+    }
+
+</script>
+
+

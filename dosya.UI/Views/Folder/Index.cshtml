@@ -1,0 +1,178 @@
+﻿@{
+    ViewData["Title"] = "Folders";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+
+}
+
+<h2 class="ml-4"> Dosya Yükleme Sistemi </h2>
+
+<div class="row">
+    <div class="col-md-3 ml-2">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Dosya Ekleme </h5>
+                <p class="card-text mt-3">
+                  
+                    <form id="folderForm">
+                        <input type="hidden" id="folderId" />
+                        <div class="form-group">
+                            <label class="form-label" >Dosyayı Seçiniz :</label>
+                            <input type="file" id="folderName" class="form-control" name="FolderName" accept=".png, .rar, .pdf, .docx,.jpg,.jpeg" required />
+                        </div>
+                        <button type="submit" id="ekle" class="btn btn-success">Kaydet</button>
+                    </form>
+                    <div id="divResult" class="alert"></div>
+                </p>
+               
+            </div>
+           
+            <div id="divResult"></div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <table id="foldersTable" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Dosya Adı</th>
+                    <th>Başlık</th>
+                    <th>Dosya Türü</th>
+                    <th>Dosya Boyutu</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="table-hover table-group-divider">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        listele();
+
+        $("#folderForm").submit(function (e) {
+            e.preventDefault();
+         
+            
+                ekle();
+            
+        });
+    });
+
+    var selectedFolderId = null;
+    var baseurl = "https://localhost:7014/";
+    var gettoken = localStorage.getItem("token");
+
+    function listele() {
+        $.ajax({
+            type: "GET",
+            url: baseurl + "api/Folders",
+            contentType: "application/json",
+            headers: {
+                "Authorization": "Bearer " + gettoken
+            },
+            success: function (response) {
+                console.log(response);
+                var html = "";
+                $.each(response, function (index, item) {
+                    html += "<tr>";
+                    html += "<td>" + item.id + "</td>";
+                    html += "<td>" + item.folderName + "</td>";
+                    html += "<td>" + item.dosyaAdı + "</td>";
+                    html += "<td>" + item.contentType + "</td>";
+                    html += "<td>" + item.fileSize + " kb</td>";
+                    html += "<td>";
+                 
+                    html += "<button class='btn btn-danger' onclick='sil(" + item.id + ")'>Delete</button>";
+                    html += "</td>";
+                    html += "</tr>";
+                });
+                $("#foldersTable tbody").html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error: " + status + " " + error);
+            }
+        });
+    }
+
+    function sil(id) {
+        if (!confirm("Dosyayı Silinecektir Emin Misiniz ?")) {
+            return;
+        }
+
+        $.ajax({
+            type: "DELETE",
+            url: baseurl + "api/Folders/" + id,
+            contentType: "application/json",
+            headers: {
+                "Authorization": "Bearer " + gettoken
+            },
+            success: function (response) {
+                listele();
+                $("#divResult").show().removeClass().addClass("alert alert-success").html("Silme Başarıyla Gerçekleştirilidi").fadeOut(5000);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error: " + status + " " + error);
+            }
+        });
+    }
+
+    function ekle() {
+
+        var input = document.getElementById('folderName');
+        var file = input.files[0];
+
+        var formData = new FormData();
+        formData.append('FolderName', file);
+
+
+        $.ajax({
+            type: "POST",
+            url: baseurl + "api/Folders",
+            data: formData,
+            contentType: false,
+            processData: false,
+            headers: {
+                "Authorization": "Bearer " + gettoken
+            },
+            success: function (response) {
+                if (response == "hata") {
+                    alert("hata!");
+
+                }
+
+                if (response != "hata") {
+                    console.log(response);
+                    listele();
+                    $("#folderForm")[0].reset(); // Reset the form
+                    $("#divResult")
+                        .show()
+                        .removeClass()
+                        .addClass("alert alert-success")
+                        .html("Dosya Ekleme Başarılı Bir Şekilde Gerçekleşitirildi")
+                        .fadeOut(5000);
+
+
+                }
+            },
+            error: function (xhr, status, error) {
+                console.log(error);
+            }
+        });
+    }
+
+
+
+
+
+ 
+
+</script>
+
+
+
